@@ -4,9 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       seed_count:
-        description: "Reports to post now; enter 0 for one report"
+        description: "Number of reports to publish now"
         required: true
-        default: "0"
+        default: "1"
         type: string
 
   schedule:
@@ -39,16 +39,18 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run OSIMU
+      - name: Publish OSIMU reports
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          SEED_COUNT: ${{ inputs.seed_count || '0' }}
+          SEED_COUNT: ${{ github.event.inputs.seed_count || '1' }}
         run: |
-          if [ "$SEED_COUNT" != "0" ]; then
-            python rss_bot.py --seed "$SEED_COUNT"
-          else
+          echo "Publishing $SEED_COUNT report(s)."
+
+          if [ "$SEED_COUNT" = "1" ]; then
             python rss_bot.py
+          else
+            python rss_bot.py --seed "$SEED_COUNT"
           fi
 
       - name: Save report history
@@ -63,4 +65,5 @@ jobs:
 
           git add state.json
           git commit -m "Update OSIMU monitoring state"
+          git pull --rebase
           git push
