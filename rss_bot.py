@@ -451,7 +451,21 @@ def get_phase(report_number: int) -> dict[str, Any]:
             return phase
 
     return PHASES[-1]
+    
+def confidence_label(confidence: int) -> str:
+    if confidence < 40:
+        return "LOW"
 
+    if confidence < 60:
+        return "LIMITED"
+
+    if confidence < 75:
+        return "MODERATE"
+
+    if confidence < 88:
+        return "HIGH"
+
+    return "ELEVATED"
 
 def format_report(
     item: dict[str, str],
@@ -468,31 +482,63 @@ def format_report(
             phase["anomaly_assessments"]
         )
 
-    agency_note = random.choice(phase["notes"])
+    editorial_note = random.choice(
+        phase["notes"]
+    )
 
     confidence = random.randint(
         phase["confidence_range"][0],
         phase["confidence_range"][1],
     )
 
+    confidence_text = confidence_label(confidence)
+
+    timestamp = datetime.now(timezone.utc).strftime(
+        "%d %b %Y · %H:%M UTC"
+    ).upper()
+
+    classification = phase["classification"]
+
+    if classification == "PUBLIC":
+        monitoring_status = "ROUTINE MONITORING"
+
+    elif classification == "MONITOR":
+        monitoring_status = "ACTIVE MONITORING"
+
+    elif classification == "ELEVATED":
+        monitoring_status = "ELEVATED REVIEW"
+
+    elif classification == "RESTRICTED":
+        monitoring_status = "RESTRICTED ASSESSMENT"
+
+    else:
+        monitoring_status = "PRIORITY MONITORING"
+
     return (
-        f"INTELLIGENCE REPORT #{report_number:03d}\n\n"
-        f"CLASSIFICATION\n"
-        f"{phase['classification']}\n\n"
-        f"SOURCE\n"
+        f"OSIMU LIVE MONITORING BULLETIN\n"
+        f"REPORT {report_number:03d} · {timestamp}\n\n"
+
+        f"STATUS\n"
+        f"{monitoring_status}\n\n"
+
+        f"SOURCE DESK\n"
         f"{item['source']}\n\n"
-        f"SUBJECT\n"
+
+        f"DEVELOPING REPORT\n"
         f"{item['title']}\n\n"
-        f"ASSESSMENT\n"
+
+        f"INITIAL ASSESSMENT\n"
         f"{assessment}\n\n"
-        f"CONFIDENCE\n"
-        f"{confidence}%\n\n"
-        f"AGENCY NOTE\n"
-        f"{agency_note}\n\n"
-        f"SOURCE RECORD\n"
+
+        f"ANALYTICAL CONFIDENCE\n"
+        f"{confidence}% · {confidence_text}\n\n"
+
+        f"EDITORIAL NOTE\n"
+        f"{editorial_note}\n\n"
+
+        f"OPEN-SOURCE RECORD\n"
         f"{item['link']}"
     )
-
 
 # ============================================================
 # TELEGRAM
