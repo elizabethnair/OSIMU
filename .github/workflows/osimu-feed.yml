@@ -43,15 +43,15 @@ jobs:
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          SEED_COUNT: ${{ github.event.inputs.seed_count || '1' }}
         run: |
-          echo "Publishing $SEED_COUNT report(s)."
+          SEED_COUNT="${{ github.event.inputs.seed_count }}"
 
-          if [ "$SEED_COUNT" = "1" ]; then
-            python rss_bot.py
-          else
-            python rss_bot.py --seed "$SEED_COUNT"
+          if [ -z "$SEED_COUNT" ]; then
+            SEED_COUNT="1"
           fi
+
+          echo "Publishing $SEED_COUNT report(s)."
+          python rss_bot.py --seed "$SEED_COUNT"
 
       - name: Save report history
         run: |
